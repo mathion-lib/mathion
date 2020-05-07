@@ -4,10 +4,12 @@
 */
 
 // Dependence on small_ntt
-use crate::fft::small_ntt::{MAX, P, fft};
+use crate::fft::small_ntt::{fft, MAX, P};
 
 use std::cmp::max;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Neg, Mul, MulAssign, Div, DivAssign, Rem, RemAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+};
 
 // Polynomial representation in Z[x]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,8 +22,13 @@ impl IntPolynomial {
     pub fn new(data: Vec<i64>) -> Self {
         let mut deg = 0;
         if data.len() != 0 {
-            deg = data.len()-1;
-            while data[deg] == 0 { if deg == 0 { break; } deg -= 1; }
+            deg = data.len() - 1;
+            while data[deg] == 0 {
+                if deg == 0 {
+                    break;
+                }
+                deg -= 1;
+            }
         }
         Self {
             data: data.get(0..=deg).unwrap().to_vec(),
@@ -39,7 +46,7 @@ impl IntPolynomial {
         } else {
             Self {
                 data: self.data.get(0..x).unwrap().to_vec(),
-                deg: (x-1),
+                deg: (x - 1),
             }
         }
     }
@@ -71,7 +78,7 @@ impl Add for IntPolynomial {
     fn add(self, other: Self) -> Self {
         let mut origin = self.data.clone();
         let mut source = other.data.clone();
-        let new_deg = max(self.deg(), other.deg())+1;
+        let new_deg = max(self.deg(), other.deg()) + 1;
         origin.resize(new_deg, 0);
         source.resize(new_deg, 0);
         for i in 0..new_deg {
@@ -92,7 +99,7 @@ impl Sub for IntPolynomial {
     fn sub(self, other: Self) -> Self {
         let mut origin = self.data.clone();
         let mut source = other.data.clone();
-        let new_deg = max(self.deg(), other.deg())+1;
+        let new_deg = max(self.deg(), other.deg()) + 1;
         origin.resize(new_deg, 0);
         source.resize(new_deg, 0);
         for i in 0..new_deg {
@@ -126,10 +133,10 @@ impl Mul for IntPolynomial {
     type Output = IntPolynomial;
     fn mul(self, other: Self) -> Self {
         let (mut p, mut q) = (self.data.clone(), other.data.clone());
-        let t = max(self.deg(), other.deg())+1;
+        let t = max(self.deg(), other.deg()) + 1;
         let mut new_sz = 1;
         let mut shift = 0;
-        while new_sz <= (t<<1) {
+        while new_sz <= (t << 1) {
             new_sz <<= 1;
             shift += 1;
         }
@@ -138,7 +145,7 @@ impl Mul for IntPolynomial {
         fft(&mut p, shift, false);
         fft(&mut q, shift, false);
         for i in 0..new_sz {
-            p[i] = (p[i]*q[i]) % P;
+            p[i] = (p[i] * q[i]) % P;
         }
         fft(&mut p, shift, true);
         for i in 0..new_sz {
@@ -210,14 +217,14 @@ impl Div for IntPolynomial {
             while i < mod_t {
                 i <<= 1;
             }
-            rev_f = rev_f.rshift(i-mod_t);
+            rev_f = rev_f.rshift(i - mod_t);
             let mut h = Self::new(vec![*rev_g.data.first().unwrap()]);
             let mut j = 2;
             while j <= i {
-                h = (2*h.clone()-rev_g.modulo(j)*h.clone()*h.clone()).modulo(j);
+                h = (2 * h.clone() - rev_g.modulo(j) * h.clone() * h.clone()).modulo(j);
                 j <<= 1;
             }
-            (rev_f*h).modulo(i).lshift(i-mod_t).reciprocal()
+            (rev_f * h).modulo(i).lshift(i - mod_t).reciprocal()
         }
     }
 }

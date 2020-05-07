@@ -3,49 +3,39 @@
     Email  : quickwshell@gmail.com
 */
 
-use std::cmp::max;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
 use crate::polynomial::IntPolynomial;
+use std::cmp::max;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[derive(Copy, Clone)]
-struct BigInteger<'a> {
-    data: &'a [bool],
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct BigInteger<'a> {
+    data: &'a [u64],
     // false : positive, true : negative
     sign: bool,
 }
 
+pub const ZERO: BigInteger = BigInteger {
+    data: &[0],
+    sign: false,
+};
+
+pub const ONE: BigInteger = BigInteger {
+    data: &[1],
+    sign: false,
+};
+
 impl<'a> BigInteger<'a> {
-    fn new(data: Vec<bool>, sign: bool) -> Self {
-        let d = data.clone().as_ptr();
+    pub fn new(data: Vec<u64>, sign: bool) -> Self {
+        let (ptr, len, _) = data.into_raw_parts();
         Self {
-            data: unsafe { std::slice::from_raw_parts(d, data.len()) },
+            data: unsafe { std::slice::from_raw_parts(ptr, len) },
             sign: sign,
         }
     }
-
-    fn from_i64(n: i64) -> Self {
-        let mut data: Vec<bool> = Vec::new();
-        let sign = if n < 0 { true } else { false };
-        let mut k = n;
-        let mut sz = 0;
-        while k > 0 {
-            if k & 1 == 1 {
-                data.push(true);
-            } else {
-                data.push(false);
-            }
-            k >>= 1;
-            sz += 1;
-        }
-        Self::new(data.clone(), sign)
-    }
-
-    fn reverse(&mut self) {
-        let mut new_data = self.data.clone().to_vec();
-        new_data.reverse();
-        self.data = unsafe { std::slice::from_raw_parts(new_data.as_ptr(), new_data.len()) };
-    }
 }
+
+const MOD: u128 = 1 << BASE_BITS;
+const BASE_BITS: u8 = 64;
 
 impl Add for BigInteger<'_> {
     type Output = Self;
@@ -53,25 +43,16 @@ impl Add for BigInteger<'_> {
         let new_sz = max(self.data.len(), other.data.len());
         let mut target = self.clone().data.to_vec();
         let mut source = other.clone().data.to_vec();
-        target.resize(new_sz, false);
-        source.resize(new_sz, false);
-        let mut round = false;
+        target.resize(new_sz, 0);
+        source.resize(new_sz, 0);
+        let mut round: u64 = 0;
         for i in 0..new_sz {
-            let mut tmp = target[i];
-            let mut new_round = false;
-            target[i] ^= source[i];
-            if tmp & source[i] {
-                new_round = true;
-            }
-            tmp = target[i];
-            target[i] ^= round;
-            if tmp ^ round {
-                new_round = true;
-            }
-            round = new_round;
+            let tmp = (target[i] as u128) + (source[i] as u128) + (round as u128);
+            round = (tmp >> BASE_BITS) as u64;
+            target[i] = (tmp % MOD) as u64;
         }
-        if round {
-            target.push(true);
+        if round != 0 {
+            target.push(round);
         }
         Self::new(target.clone(), self.sign)
     }
@@ -83,35 +64,51 @@ impl AddAssign for BigInteger<'_> {
     }
 }
 
-// Not implemented yet
-
-/*impl Sub for BigInteger<'_> {
+impl Sub for BigInteger<'_> {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
-        let new_sz = max(self.data.len(), other.data.len());
-        let mut target = self.clone().data.to_vec();
-        let mut source = other.clone().data.to_vec();
-        target.resize(new_sz, false);
-        source.resize(new_sz, false);
-        let mut round = false;
-        for i in 0..new_sz {
-            let mut tmp = target[i];
-            let mut new_round = false;
-            target[i] ^= source[i];
-            if tmp & source[i] {
-                new_round = true;
+        let mut target = other.clone();
+        {
+            let mut new_data = target.data.clone().to_vec();
+            let new_len = new_data.len();
+            for i in 0..new_len {
+                new_data[i] = !new_data[i];
             }
-            tmp = target[i];
-            target[i] ^= round;
-            if tmp ^ round {
-                new_round = true;
+            let (ptr, len, _) = new_data.into_raw_parts();
+            target.data = unsafe { std::slice::from_raw_parts(ptr, len) };
+            target += ONE;
+        }
+        let mut res = self + target;
+        {
+            let mut new_data = res.data.clone().to_vec();
+            let new_len = new_data.len();
+            let top = new_data[new_len - 1];
+            if top == 1 {
+                new_data.remove(new_len - 1);
+            } else {
+                let mut bit_len = BASE_BITS;
+                while bit_len > 0 && top & (1 << (bit_len - 1)) == 0 {
+                    bit_len -= 1;
+                }
+                if bit_len == 0 {
+                    new_data.remove(new_len - 1);
+                    dbg!(new_data.clone());
+                    if new_len >= 2 {
+                        let top2 = new_data[new_len-2];
+                        let mut bit_len2 = BASE_BITS;
+                        while bit_len2 > 0 && top2 & (1 << (bit_len2 - 1)) == 0 {
+                            bit_len2 -= 1;
+                        }
+                        new_data[new_len-2] ^= 1 << (bit_len2 - 1);
+                    }
+                } else {
+                    new_data[new_len - 1] ^= 1 << (bit_len - 1);
+                }
             }
-            round = new_round;
+            let (ptr, len, _) = new_data.into_raw_parts();
+            res.data = unsafe { std::slice::from_raw_parts(ptr, len) };
         }
-        if round {
-            target.push(true);
-        }
-        Self::new(target.clone(), self.sign)
+        res
     }
 }
 
@@ -119,4 +116,4 @@ impl SubAssign for BigInteger<'_> {
     fn sub_assign(&mut self, other: Self) {
         *self = self.clone() - other;
     }
-}*/
+}

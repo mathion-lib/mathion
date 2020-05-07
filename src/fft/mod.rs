@@ -4,4 +4,3 @@
 */
 
 pub mod small_ntt;
-
