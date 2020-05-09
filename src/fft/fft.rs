@@ -3,7 +3,7 @@
     email  : quickwshell@gmail.com
 */
 
-use crate::types::field::{self, GaloisField as Field, DEFAULT_P};
+use crate::field::galois_field::{self as field, GaloisField as Field, DEFAULT_P};
 
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 

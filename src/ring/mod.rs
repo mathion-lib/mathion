@@ -4,6 +4,4 @@
 */
 
 pub mod big_integer;
-pub mod field;
-
-pub use big_integer::BigInteger;
+pub mod matrix;

@@ -5,14 +5,33 @@
 
 // Dependence on small_ntt
 use crate::fft::{do_fft, FFTType};
-use crate::types::field::{self, GaloisField as Field};
+use crate::field::galois_field::{self as field, GaloisField as Field};
 
 use std::cmp::max;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 
-// Polynomial representation in Z[x]
+/// Polynomial representation in Z[x]
+/// # Example
+/// ## Multiplication example
+/// ```rust
+/// use mathion::field::int_polynomial::IntPolynomial;
+/// assert_eq!(
+///     IntPolynomial::from(vec![0, 0, 1]),
+///     IntPolynomial::from(vec![0, 1]) * IntPolynomial::from(vec![0, 1])
+/// );
+/// ```
+/// ## Modulo & Division example
+/// ```rust
+/// use mathion::field::int_polynomial::IntPolynomial;
+/// let f = IntPolynomial::from(vec![1, 2, 1]);
+/// let g = IntPolynomial::from(vec![1, 1]);
+/// let q = f.clone() / g.clone();
+/// let rem = f.clone() % g.clone();
+/// assert_eq!(q, IntPolynomial::from(vec![1, 1]));
+/// assert_eq!(rem, IntPolynomial::from(vec![0]));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IntPolynomial {
     data: Vec<Field>,
@@ -165,7 +184,6 @@ impl Mul for IntPolynomial {
         q.resize(new_sz, field::ZERO);
         do_fft::<Field>(&mut p, FFTType::Straight);
         do_fft::<Field>(&mut q, FFTType::Straight);
-        //dbg!(p.clone(), q.clone());
         for i in 0..new_sz {
             p[i] *= q[i];
         }

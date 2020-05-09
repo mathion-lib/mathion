@@ -3,6 +3,5 @@
     email  : quickwshell@gmail.com
 */
 
-mod int_polynomial;
-
-pub use int_polynomial::IntPolynomial;
+pub mod galois_field;
+pub mod int_polynomial;
