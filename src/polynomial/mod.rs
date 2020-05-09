@@ -1,6 +1,6 @@
 /*
-    Author : quickn (quickn.ga)
-    Email  : quickwshell@gmail.com
+    author : quickn (quickn.ga)
+    email  : quickwshell@gmail.com
 */
 
 mod int_polynomial;

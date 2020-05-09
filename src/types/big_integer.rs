@@ -1,11 +1,10 @@
 /*
-    Author : quickn (quickn.ga)
-    Email  : quickwshell@gmail.com
+    author : quickn (quickn.ga)
+    email  : quickwshell@gmail.com
 */
 
-use crate::polynomial::IntPolynomial;
 use std::cmp::max;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct BigInteger<'a> {
@@ -94,12 +93,12 @@ impl Sub for BigInteger<'_> {
                     new_data.remove(new_len - 1);
                     dbg!(new_data.clone());
                     if new_len >= 2 {
-                        let top2 = new_data[new_len-2];
+                        let top2 = new_data[new_len - 2];
                         let mut bit_len2 = BASE_BITS;
                         while bit_len2 > 0 && top2 & (1 << (bit_len2 - 1)) == 0 {
                             bit_len2 -= 1;
                         }
-                        new_data[new_len-2] ^= 1 << (bit_len2 - 1);
+                        new_data[new_len - 2] ^= 1 << (bit_len2 - 1);
                     }
                 } else {
                     new_data[new_len - 1] ^= 1 << (bit_len - 1);

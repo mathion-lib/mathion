@@ -1,10 +1,11 @@
 /*
-    Author : quickn (quickn.ga)
-    Email  : quickwshell@gmail.com
+    author : quickn (quickn.ga)
+    email  : quickwshell@gmail.com
 */
 
 // Dependence on small_ntt
-use crate::fft::small_ntt::{fft, MAX, P};
+use crate::fft::{do_fft, FFTType};
+use crate::types::field::{self, GaloisField as Field};
 
 use std::cmp::max;
 use std::ops::{
@@ -14,12 +15,29 @@ use std::ops::{
 // Polynomial representation in Z[x]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IntPolynomial {
-    data: Vec<i64>,
+    data: Vec<Field>,
     deg: usize,
 }
 
 impl IntPolynomial {
-    pub fn new(data: Vec<i64>) -> Self {
+    pub fn new(data: Vec<Field>) -> Self {
+        let mut deg = 0;
+        if data.len() != 0 {
+            deg = data.len() - 1;
+            while data[deg] == field::ZERO {
+                if deg == 0 {
+                    break;
+                }
+                deg -= 1;
+            }
+        }
+        Self {
+            data: data.get(0..=deg).unwrap().to_vec(),
+            deg: deg,
+        }
+    }
+
+    pub fn from(data: Vec<i64>) -> Self {
         let mut deg = 0;
         if data.len() != 0 {
             deg = data.len() - 1;
@@ -31,7 +49,12 @@ impl IntPolynomial {
             }
         }
         Self {
-            data: data.get(0..=deg).unwrap().to_vec(),
+            data: data
+                .get(0..=deg)
+                .unwrap()
+                .iter()
+                .map(|&d| Field::from(d))
+                .collect(),
             deg: deg,
         }
     }
@@ -62,7 +85,7 @@ impl IntPolynomial {
 
     fn rshift(&self, k: usize) -> Self {
         let mut res = Vec::new();
-        res.resize(k, 0);
+        res.resize(k, field::ZERO);
         let mut t = self.data.clone();
         res.append(&mut t);
         Self::new(res)
@@ -79,8 +102,8 @@ impl Add for IntPolynomial {
         let mut origin = self.data.clone();
         let mut source = other.data.clone();
         let new_deg = max(self.deg(), other.deg()) + 1;
-        origin.resize(new_deg, 0);
-        source.resize(new_deg, 0);
+        origin.resize(new_deg, field::ZERO);
+        source.resize(new_deg, field::ZERO);
         for i in 0..new_deg {
             origin[i] += source[i];
         }
@@ -100,8 +123,8 @@ impl Sub for IntPolynomial {
         let mut origin = self.data.clone();
         let mut source = other.data.clone();
         let new_deg = max(self.deg(), other.deg()) + 1;
-        origin.resize(new_deg, 0);
-        source.resize(new_deg, 0);
+        origin.resize(new_deg, field::ZERO);
+        source.resize(new_deg, field::ZERO);
         for i in 0..new_deg {
             origin[i] -= source[i];
         }
@@ -135,28 +158,18 @@ impl Mul for IntPolynomial {
         let (mut p, mut q) = (self.data.clone(), other.data.clone());
         let t = max(self.deg(), other.deg()) + 1;
         let mut new_sz = 1;
-        let mut shift = 0;
         while new_sz <= (t << 1) {
             new_sz <<= 1;
-            shift += 1;
         }
-        p.resize(new_sz, 0);
-        q.resize(new_sz, 0);
-        fft(&mut p, shift, false);
-        fft(&mut q, shift, false);
+        p.resize(new_sz, field::ZERO);
+        q.resize(new_sz, field::ZERO);
+        do_fft::<Field>(&mut p, FFTType::Straight);
+        do_fft::<Field>(&mut q, FFTType::Straight);
+        //dbg!(p.clone(), q.clone());
         for i in 0..new_sz {
-            p[i] = (p[i] * q[i]) % P;
+            p[i] *= q[i];
         }
-        fft(&mut p, shift, true);
-        for i in 0..new_sz {
-            if p[i] < 0 {
-                p[i] += P as i64;
-                p[i] %= P as i64;
-            }
-            if p[i] > (MAX as i64) {
-                p[i] = p[i] - (P as i64);
-            }
-        }
+        do_fft::<Field>(&mut p, FFTType::Inverse);
         Self::new(p)
     }
 }
@@ -165,11 +178,11 @@ impl Mul<IntPolynomial> for i64 {
     type Output = IntPolynomial;
     fn mul(self, other: Self::Output) -> Self::Output {
         if self == 0 {
-            Self::Output::new(vec![0])
+            Self::Output::new(vec![field::ZERO])
         } else {
             let mut data = other.data.clone();
             for i in 0..=other.deg() {
-                data[i] *= self;
+                data[i] *= Field::from(self);
             }
             Self::Output {
                 data: data,
@@ -183,11 +196,11 @@ impl Mul<i64> for IntPolynomial {
     type Output = IntPolynomial;
     fn mul(self, other: i64) -> Self {
         if other == 0 {
-            Self::new(vec![0])
+            Self::new(vec![field::ZERO])
         } else {
             let mut data = self.data.clone();
             for i in 0..=self.deg() {
-                data[i] *= other;
+                data[i] *= Field::from(other);
             }
             Self {
                 data: data,
@@ -209,7 +222,7 @@ impl Div for IntPolynomial {
         if self.deg() < other.deg() {
             self
         } else {
-            assert_eq!(other.data.last().unwrap().abs(), 1);
+            assert_eq!(other.data.last().unwrap().abs(), field::ONE);
             let mut rev_f = self.reciprocal();
             let rev_g = other.reciprocal();
             let mod_t = rev_f.deg() - rev_g.deg() + 1;
