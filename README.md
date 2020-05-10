@@ -5,7 +5,7 @@
 [s1]: https://img.shields.io/badge/License-MIT-blue.svg
 
 [li]: LICENSE
-! Warning ! This library must run in the Rust `nightly`
+! Warning ! This library must run in the `Rust nightly`
 # TODO
 ## Fast-Fourier-Transform by using [Cooley-Tukey algorithm](https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm)
 - [x] Number theoretic
@@ -19,7 +19,7 @@
 - [ ] Multiplication
 - [ ] Inversion
 ## Field
-### Galois Field (Small, by using native integer (`i64`))
+### Galois Field (Small, by using native integer `i64`)
 - [x] Addition, Subtraction
 - [x] Multiplication, Division
 ### Polynomial (Using galois field (small))
