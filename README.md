@@ -1,4 +1,10 @@
-# The mathion - computational mathematics library
+<img src="./mathion-logo.png" width="20%" height="20%" title="test" alt="mathion-logo"></img>
+# mathion (math + ion) - computational mathematics library
+[![MIT][s1]][li]
+
+[s1]: https://img.shields.io/badge/License-MIT-blue.svg
+
+[li]: LICENSE
 ! Warning ! This library must run in the Rust `nightly`
 # TODO
 ## Fast-Fourier-Transform by using [Cooley-Tukey algorithm](https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm)
