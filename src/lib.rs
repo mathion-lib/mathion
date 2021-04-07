@@ -3,14 +3,14 @@
     email  : quickwshell@gmail.com
 */
 
-#![feature(vec_into_raw_parts)]
-#![feature(const_fn)]
-
+extern crate alga;
 extern crate num;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate alga_derive;
 
 pub mod fft;
 pub mod field;
-pub mod ring;
 pub mod prelude;
+pub mod ring;

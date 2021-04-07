@@ -28,15 +28,14 @@ pub struct BigInteger {
 }
 
 lazy_static! {
-pub static ref ZERO: BigInteger = BigInteger {
-    data: vec![0],
-    sign: Sign::Positive,
-};
-
-pub static ref ONE: BigInteger = BigInteger {
-    data: vec![1],
-    sign: Sign::Positive,
-};
+    pub static ref ZERO: BigInteger = BigInteger {
+        data: vec![0],
+        sign: Sign::Positive,
+    };
+    pub static ref ONE: BigInteger = BigInteger {
+        data: vec![1],
+        sign: Sign::Positive,
+    };
 }
 
 impl BigInteger {
