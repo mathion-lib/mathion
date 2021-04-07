@@ -38,7 +38,7 @@ use std::fmt::{self, Debug};
 #[derive(Clone, PartialEq)]
 //#[alga_traits(Field(Additive, Multiplicative))]
 pub struct IntPolynomial {
-    data: Vec<W<GaloisField, Additive, Multiplicative>>,
+    pub data: Vec<W<GaloisField, Additive, Multiplicative>>,
     deg: usize,
 }
 
