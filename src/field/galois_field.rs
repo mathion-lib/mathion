@@ -70,6 +70,10 @@ impl GaloisField {
             val: -self.val,
         }
     }
+
+    pub fn modulo(&mut self, p: i64) {
+        self.val %= p;
+    }
 }
 
 pub const ZERO: GaloisField = GaloisField { val: 0 };
